@@ -1,19 +1,26 @@
 public class Course {
     private String courseCode, courseName, requiredExpertise;
-    private int requiredHours;
-    private TeachingAssistant assignedTA;
+    private int requiredHours, requiredTAs, assignedCount;
+    private TimeSlot timeSlot;
+    private TeachingAssistant[] assignedTAs;
 
-    public Course(String courseCode, String courseName, String requiredExpertise, int requiredHours) {
-        this.courseCode = Person.checkText(courseCode);
-        this.courseName = Person.checkText(courseName);
-        this.requiredExpertise = Person.checkText(requiredExpertise);
-        if (requiredHours <= 0)
+    public Course(String code, String name, String expertise, int hours, TimeSlot slot, int requiredTAs) {
+        courseCode = Person.requireText(code, "Course code");
+        courseName = Person.requireText(name, "Course name");
+        requiredExpertise = Person.requireText(expertise, "Required expertise");
+        if (hours <= 0)
             throw new IllegalArgumentException("Hours must be greater than zero.");
-        this.requiredHours = requiredHours;
-        this.assignedTA = null;
+        if (slot == null)
+            throw new IllegalArgumentException("A course needs a weekly time slot.");
+        if (requiredTAs < 1 || requiredTAs > 50) {
+            throw new IllegalArgumentException("Required TAs must be between 1 and 50.");
+        }
+        requiredHours = hours;
+        timeSlot = slot;
+        this.requiredTAs = requiredTAs;
+        assignedTAs = new TeachingAssistant[requiredTAs];
     }
 
-    // Getters
     public String getCourseCode() {
         return courseCode;
     }
@@ -30,34 +37,68 @@ public class Course {
         return requiredHours;
     }
 
-    public TeachingAssistant getAssignedTA() {
-        return assignedTA;
+    public int getRequiredTAs() {
+        return requiredTAs;
     }
 
-    // Setters
-    public void setCourseCode(String courseCode) {
-        this.courseCode = Person.checkText(courseCode);
+    public int getAssignedCount() {
+        return assignedCount;
     }
 
-    public void setCourseName(String courseName) {
-        this.courseName = Person.checkText(courseName);
-    }
-
-    public void setRequiredExpertise(String requiredExpertise) {
-        this.requiredExpertise = Person.checkText(requiredExpertise);
-    }
-
-    public void setRequiredHours(int requiredHours) {
-        if (requiredHours <= 0)
-            throw new IllegalArgumentException("Hours must be greater than zero.");
-        this.requiredHours = requiredHours;
-    }
-
-    public void setAssignedTA(TeachingAssistant assignedTA) {
-        this.assignedTA = assignedTA;
+    public TimeSlot getTimeSlot() {
+        return timeSlot;
     }
 
     public boolean isAssigned() {
-        return assignedTA != null;
+        return assignedCount > 0;
+    }
+
+    public boolean isFull() {
+        return assignedCount == requiredTAs;
+    }
+
+    public TeachingAssistant getAssignedTA(int index) {
+        if (index < 0 || index >= assignedCount)
+            throw new IllegalArgumentException("Assigned TA was not found.");
+        return assignedTAs[index];
+    }
+
+    public boolean hasTA(String id) {
+        for (int i = 0; i < assignedCount; i++) {
+            if (assignedTAs[i].getId().equalsIgnoreCase(id))
+                return true;
+        }
+        return false;
+    }
+
+    void addAssignedTA(TeachingAssistant ta) {
+        if (ta == null)
+            throw new IllegalArgumentException("TA cannot be null.");
+        if (hasTA(ta.getId()))
+            throw new IllegalArgumentException("TA is already assigned to this course.");
+        if (isFull())
+            throw new IllegalStateException("All TA positions for this course are filled.");
+        assignedTAs[assignedCount] = ta;
+        assignedCount++;
+    }
+
+    void removeAssignedTA(String id) {
+        for (int i = 0; i < assignedCount; i++) {
+            if (assignedTAs[i].getId().equalsIgnoreCase(id)) {
+                for (int j = i; j < assignedCount - 1; j++)
+                    assignedTAs[j] = assignedTAs[j + 1];
+                assignedCount--;
+                assignedTAs[assignedCount] = null;
+                return;
+            }
+        }
+        throw new IllegalArgumentException("That TA is not assigned to this course.");
+    }
+
+    void replaceTA(TeachingAssistant replacement) {
+        for (int i = 0; i < assignedCount; i++) {
+            if (assignedTAs[i].getId().equalsIgnoreCase(replacement.getId()))
+                assignedTAs[i] = replacement;
+        }
     }
 }

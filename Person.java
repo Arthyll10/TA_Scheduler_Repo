@@ -2,12 +2,11 @@ public abstract class Person {
     private String id, name, email;
 
     public Person(String id, String name, String email) {
-        this.id = checkText(id);
-        this.name = checkText(name);
-        this.email = checkText(email);
+        this.id = requireText(id, "ID");
+        setName(name);
+        setEmail(email);
     }
 
-    // Getters
     public String getId() {
         return id;
     }
@@ -20,26 +19,23 @@ public abstract class Person {
         return email;
     }
 
-    // Setters
-    public void setId(String id) {
-        this.id = checkText(id);
-    }
-
     public void setName(String name) {
-        this.name = checkText(name);
+        this.name = requireText(name, "Name");
     }
 
     public void setEmail(String email) {
-        this.email = checkText(email);
+        this.email = requireText(email, "Email");
     }
 
-    public static String checkText(String text) {
-        if (text == null || text.trim().isEmpty() || text.contains("\n") || text.contains("\r")) {
-            throw new IllegalArgumentException("Text fields must be nonblank and on one line.");
+    public static String requireText(String value, String field) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException(field + " cannot be blank.");
         }
-        return text.trim();
+        if (value.contains("|") || value.contains("\n") || value.contains("\r")) {
+            throw new IllegalArgumentException(field + " cannot contain | or line breaks.");
+        }
+        return value.trim();
     }
 
     public abstract String getRoleDetails();
-
 }

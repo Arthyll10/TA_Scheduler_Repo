@@ -5,14 +5,10 @@ public class GraduateTA extends TeachingAssistant {
     public GraduateTA(String id, String name, String email, String expertise,
             int maxWorkload, String researchDomain, double hourlyStipend) {
         super(id, name, email, expertise, maxWorkload);
-        this.researchDomain = Person.checkText(researchDomain);
-        if (!Double.isFinite(hourlyStipend) || hourlyStipend < 0) {
-            throw new IllegalArgumentException("Stipend must be a finite number of zero or more.");
-        }
-        this.hourlyStipend = hourlyStipend;
+        setResearchDomain(researchDomain);
+        setHourlyStipend(hourlyStipend);
     }
 
-    // Getters
     public String getResearchDomain() {
         return researchDomain;
     }
@@ -21,45 +17,35 @@ public class GraduateTA extends TeachingAssistant {
         return hourlyStipend;
     }
 
-    // Setters
-    public void setResearchDomain(String researchDomain) {
-        this.researchDomain = Person.checkText(researchDomain);
+    public void setResearchDomain(String domain) {
+        researchDomain = Person.requireText(domain, "Research domain");
     }
 
-    public void setHourlyStipend(double hourlyStipend) {
-        if (!Double.isFinite(hourlyStipend) || hourlyStipend < 0) {
+    public void setHourlyStipend(double stipend) {
+        if (!Double.isFinite(stipend) || stipend < 0) {
             throw new IllegalArgumentException("Stipend must be a finite number of zero or more.");
         }
-        this.hourlyStipend = hourlyStipend;
+        hourlyStipend = stipend;
+    }
+
+    @Override
+    public long getWorkloadLimit() {
+        return (long) getMaxWorkload() + 3;
     }
 
     @Override
     public boolean canAcceptAssignment(int hours, String requiredExpertise) {
-        if (hours <= 0) {
-            return false;
-        }
-
-        if (!isAvailable()) {
-            return false;
-        }
-
-        if (!getExpertise().equalsIgnoreCase(requiredExpertise)) {
-            return false;
-        }
-
-        if ((long) getCurrentWorkload() + hours > (long) getMaxWorkload() + 3
-                || (long) getCurrentWorkload() + hours > Integer.MAX_VALUE) {
-            return false;
-        }
-
-        return true;
+        // The parent check uses this graduate TA's overridden workload limit.
+        return super.canAcceptAssignment(hours, requiredExpertise);
     }
 
     @Override
     public String getRoleDetails() {
         return String.format(
-                "Graduate Teaching Assistant : %s\nExpertise : %s\nWorkload : %d/%d\nResearch Domain : %s\nHourly Stipend : Php%.2f",
-                getName(), getExpertise(), getCurrentWorkload(), ((long) getMaxWorkload() + 3), researchDomain,
-                hourlyStipend);
+                "Role               : Graduate Teaching Assistant%nName               : %s%n"
+                        + "Expertise          : %s%nWeekly workload    : %d/%d hours%nAvailable          : %s%n"
+                        + "Research domain    : %s%nHourly stipend     : PHP %.2f/hr",
+                getName(), getExpertise(), getCurrentWorkload(), getWorkloadLimit(),
+                isAvailable() ? "Yes" : "No", researchDomain, hourlyStipend);
     }
 }
